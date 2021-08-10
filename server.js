@@ -27,59 +27,39 @@ app.get("/api/hello", function (req, res) {
 
 function validateTimestamp(str) {
   const parsed = parseInt(str, 10);
-  return !isNaN(parsed)
-}
-
-function validateYYYYMMDD(dateStr) {
-  var parts = dateStr.split("-");
-  if (parts.length !== 3) {
+  if (isNaN(parsed)) {
     return false
   }
-  let yyyy = parseInt(parts[0], 10)
-  let mm = parseInt(parts[1], 10)
-  let dd = parseInt(parts[2], 10)
-  if (isNaN(yyyy) || isNaN(mm) || isNaN(dd)) {
-    return false
-  }
-  if (yyyy >= 0 && mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) {
-    return true
-  }
-  return false
+  let dt = new Date(parsed);
+  return dt.toUTCString() !== 'Invalid Date'
 }
 
-function parseYYYYMMDD(str){
-  var parts = str.split("-");
-  return new Date(
-    parseInt(parts[0], 10),
-    parseInt(parts[1], 10) - 1,
-    parseInt(parts[2], 10))
+function validateDateStr(str) {
+  let dt = new Date(str);
+  return dt.toUTCString() !== 'Invalid Date'
 }
 
 function tryParseDateStr(dateStr) {
-  if (validateYYYYMMDD(dateStr)) {
-    var dt = parseYYYYMMDD(dateStr);
-    return [dt, null]
+  var dt;
+  if (dateStr == undefined) {
+    dt = new Date();
+  } else if (validateDateStr(dateStr)) {
+    dt = new Date(dateStr);
   } else if (validateTimestamp(dateStr)) {
-    return [null, null]
+    dt = new Date(dateStr * 1);
   } else {
     return [null, 'Invalid Date']
   }
+  return [dt, null]
 }
 
 // my second API endpoint...
-app.get("/api/:dateStr", function (req, res) {
+app.get("/api/:dateStr?", function (req, res) {
   var parseRes = tryParseDateStr(req.params.dateStr)
-  var dt = parseRes[0]
-  var err = parseRes[1]
+  var dt = parseRes[0];
+  var err = parseRes[1];
   if (err !== null) {
-    res.json({ error : err })
-    return
-  }
-  if (dt == null) {
-    dt = new Date(req.params.dateStr * 1);
-  }
-  if (dt.toUTCString() === 'Invalid Date') {
-    res.json({ error : 'Invalid Date' })
+    res.json({ error : err });
     return
   }
   res.json({unix: dt.getTime(), utc: dt.toUTCString()});

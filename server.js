@@ -25,6 +25,30 @@ app.get("/api/hello", function (req, res) {
 });
 
 
+function tryParseDateStr(dateStr) {
+  var parts = dateStr.split("-");
+  if (parts.length < 3) {
+    return null
+  }
+  var dt = new Date(
+    parseInt(parts[0], 10),
+    parseInt(parts[1], 10) - 1,
+    parseInt(parts[2], 10));
+  return dt
+}
+
+// my second API endpoint...
+app.get("/api/:dateStr", function (req, res) {
+  var dt = tryParseDateStr(req.params.dateStr)
+  if (dt !== null) {
+    res.json({unix: dt.getTime(), utc: dt.toUTCString()});
+    return
+  }
+  var date = new Date(req.params.dateStr * 1);
+  res.json({unix: parseInt(req.params.dateStr), utc: date.toUTCString()});
+})
+
+
 
 // listen for requests :)
 var listener = app.listen(process.env.PORT, function () {
